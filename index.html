@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SSB PPDT Practice Tool</title>
+    <style>
+        /* --- Base Styles --- */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            background-color: #f0f2f5;
+            color: #333;
+            overflow: hidden; /* Prevent scrolling */
+        }
+
+        /* --- Landing Page (Rules & Upload) --- */
+        #setup-screen {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: white;
+        }
+
+        .card {
+            width: 90%;
+            max-width: 800px;
+            padding: 40px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        h1 { color: #2c3e50; margin-bottom: 10px; }
+        h2 { color: #555; margin-top: 0; }
+
+        .rules-box {
+            background: #fff3cd;
+            border-left: 6px solid #ffc107;
+            padding: 20px;
+            text-align: left;
+            margin-bottom: 30px;
+            border-radius: 4px;
+        }
+
+        .rules-box h3 { margin-top: 0; color: #856404; }
+
+        .upload-zone {
+            border: 3px dashed #3498db;
+            padding: 40px;
+            cursor: pointer;
+            background: #f9fcff;
+            transition: all 0.3s;
+            margin-bottom: 20px;
+            border-radius: 8px;
+        }
+
+        .upload-zone:hover { background: #eaf6ff; border-color: #2980b9; }
+
+        .btn {
+            padding: 15px 40px;
+            font-size: 20px;
+            background: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn:disabled { background: #ccc; cursor: not-allowed; }
+        .btn:hover:not(:disabled) { background: #219150; }
+
+        /* --- Practice Page (Timer & Image) --- */
+        #practice-screen {
+            display: none; /* Hidden at start */
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #2c3e50; /* Dark mode for focus */
+        }
+
+        /* Image Container */
+        #image-container {
+            display: none; /* Hidden during writing phase */
+            height: 90vh;
+            width: 100%;
+            background: black;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #image-container img {
+            max-width: 100%;
+            max-height: 100%;
+        }
+
+        /* Centered Timer Container */
+        #timer-container {
+            display: none; /* Hidden during perception phase */
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .phase-label {
+            font-size: 28px;
+            color: #bdc3c7;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 30px;
+        }
+
+        /* The Highlighted Timer Circle */
+        .timer-circle {
+            width: 280px;
+            height: 280px;
+            border-radius: 50%;
+            background: #34495e;
+            border: 12px solid #ecf0f1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 0 50px rgba(0,0,0,0.5);
+            transition: all 0.3s ease;
+        }
+
+        .timer-text {
+            font-size: 90px;
+            font-weight: bold;
+            color: #ecf0f1;
+            font-family: monospace;
+        }
+
+        /* Warning Animations */
+        .warning {
+            border-color: #f39c12 !important;
+            animation: pulse 1s infinite;
+        }
+
+        .danger {
+            border-color: #e74c3c !important;
+            background: #c0392b;
+            animation: shake 0.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); box-shadow: 0 0 60px rgba(243, 156, 18, 0.8); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes shake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            10% { transform: translate(-1px, -2px) rotate(-1deg); }
+            20% { transform: translate(-3px, 0px) rotate(1deg); }
+            30% { transform: translate(3px, 2px) rotate(0deg); }
+            40% { transform: translate(1px, -1px) rotate(1deg); }
+            50% { transform: translate(-1px, 2px) rotate(-1deg); }
+            60% { transform: translate(-3px, 1px) rotate(0deg); }
+            70% { transform: translate(3px, 1px) rotate(-1deg); }
+            80% { transform: translate(-1px, -1px) rotate(1deg); }
+            90% { transform: translate(1px, 2px) rotate(0deg); }
+            100% { transform: translate(1px, -2px) rotate(-1deg); }
+        }
+
+        /* Status Text */
+        #status-text {
+            position: absolute;
+            bottom: 20px;
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- SCREEN 1: RULES & UPLOAD -->
+    <div id="setup-screen">
+        <div class="card">
+            <h1>PPDT Practice Tool</h1>
+            <h2>Hosted on GitHub</h2>
+            
+            <div class="rules-box">
+                <h3>Strict Mode Rules</h3>
+                <ul style="text-align: left; padding-left: 20px;">
+                    <li><strong>Perception:</strong> Image shows for 30 seconds.</li>
+                    <li><strong>Writing:</strong> 4 Minutes to write. Image is hidden.</li>
+                    <li><strong>No Pausing:</strong> The timer cannot be stopped once started.</li>
+                    <li><strong>Privacy:</strong> Your photos are processed locally in your browser. Nothing is uploaded to a server.</li>
+                </ul>
+            </div>
+
+            <div class="upload-zone" onclick="document.getElementById('fileInput').click()">
+                <h2>Click to Select Images</h2>
+                <p id="file-status">No images selected</p>
+                <input type="file" id="fileInput" accept="image/*" multiple style="display:none" onchange="handleFiles(this.files)">
+            </div>
+
+            <button class="btn" id="startBtn" disabled onclick="startTest()">START PRACTICE</button>
+        </div>
+    </div>
+
+    <!-- SCREEN 2: PRACTICE AREA -->
+    <div id="practice-screen">
+        
+        <!-- View 1: The Image -->
+        <div id="image-container">
+            <img id="main-image" src="" alt="PPDT Image">
+        </div>
+
+        <!-- View 2: The Centered Timer -->
+        <div id="timer-container">
+            <div class="phase-label" id="phase-label">Writing Phase</div>
+            <div class="timer-circle" id="timer-box">
+                <div class="timer-text" id="timer-display">04:00</div>
+            </div>
+        </div>
+
+        <div id="status-text">Image <span id="current-count">1</span> of <span id="total-count">0</span></div>
+    </div>
+
+    <script>
+        // --- Configuration ---
+        const PERCEPTION_TIME = 30; // Seconds
+        const WRITING_TIME = 240;   // Seconds (4 Minutes)
+        
+        let imageFiles = []; // Stores the user's images
+        let currentIndex = 0;
+        let timerInterval;
+
+        // --- 1. File Handling (Local Browser Memory) ---
+        function handleFiles(files) {
+            imageFiles = Array.from(files); // Convert to array
+            if (imageFiles.length > 0) {
+                document.getElementById('file-status').innerText = imageFiles.length + " images ready.";
+                document.getElementById('startBtn').disabled = false;
+            } else {
+                document.getElementById('file-status').innerText = "No images selected";
+                document.getElementById('startBtn').disabled = true;
+            }
+        }
+
+        // --- 2. Start Test Logic ---
+        function startTest() {
+            if (imageFiles.length === 0) return;
+
+            // Switch Screens
+            document.getElementById('setup-screen').style.display = 'none';
+            document.getElementById('practice-screen').style.display = 'flex';
+            
+            // Set total count
+            document.getElementById('total-count').innerText = imageFiles.length;
+
+            currentIndex = 0;
+            loadNextImage();
+        }
+
+        // --- 3. Phase Logic ---
+        function loadNextImage() {
+            if (currentIndex >= imageFiles.length) {
+                endTest();
+                return;
+            }
+
+            // Update status counter
+            document.getElementById('current-count').innerText = currentIndex + 1;
+
+            // Create a temporary URL for the image file
+            const imgUrl = URL.createObjectURL(imageFiles[currentIndex]);
+            const imgElement = document.getElementById('main-image');
+            imgElement.src = imgUrl;
+
+            // Start Perception Phase
+            startPerception();
+        }
+
+        function startPerception() {
+            // UI Setup
+            document.getElementById('phase-label').innerText = "Observe The Picture";
+            document.getElementById('image-container').style.display = 'flex';
+            document.getElementById('timer-container').style.display = 'none';
+            
+            // Start 30s Timer
+            startTimer(PERCEPTION_TIME, "perception", () => {
+                startWriting();
+            });
+        }
+
+        function startWriting() {
+            // UI Setup (Hide Image, Show Timer)
+            document.getElementById('image-container').style.display = 'none';
+            document.getElementById('timer-container').style.display = 'flex';
+            document.getElementById('phase-label').innerText = "Write Your Story";
+            
+            // Reset Timer Styling
+            document.getElementById('timer-box').classList.remove('warning', 'danger');
+
+            // Start 4m Timer
+            startTimer(WRITING_TIME, "writing", () => {
+                currentIndex++;
+                loadNextImage();
+            });
+        }
+
+        // --- 4. Timer Engine ---
+        function startTimer(seconds, type, callback) {
+            let timeLeft = seconds;
+            const display = document.getElementById('timer-display');
+            const box = document.getElementById('timer-box');
+            
+            updateDisplay(timeLeft);
+            
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                updateDisplay(timeLeft);
+
+                // Warnings only for Writing Phase
+                if (type === "writing") {
+                    if (timeLeft <= 10) {
+                        box.classList.remove('warning');
+                        box.classList.add('danger'); // Red + Shake
+                    } else if (timeLeft <= 30) {
+                        box.classList.add('warning'); // Orange + Pulse
+                    }
+                }
+
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    callback();
+                }
+            }, 1000);
+        }
+
+        function updateDisplay(secs) {
+            const m = Math.floor(secs / 60);
+            const s = secs % 60;
+            document.getElementById('timer-display').innerText = 
+                `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        }
+
+        function endTest() {
+            document.getElementById('phase-label').innerText = "TEST FINISHED";
+            document.getElementById('timer-display').innerText = "END";
+            document.getElementById('timer-box').classList.remove('warning', 'danger');
+            alert("All images processed. Practice Complete.");
+        }
+    </script>
+</body>
+</html>
